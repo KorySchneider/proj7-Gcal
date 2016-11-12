@@ -57,9 +57,6 @@ def index():
 @app.route("/choose")
 def choose():
     ## We'll need authorization to list calendars 
-    ## I wanted to put what follows into a function, but had
-    ## to pull it back here because the redirect has to be a
-    ## 'return' 
     app.logger.debug("Checking credentials for Google calendar access")
     credentials = valid_credentials()
     if not credentials:
@@ -202,7 +199,7 @@ def setrange():
     flask.session['begin_date'] = interpret_date(daterange_parts[0])
     flask.session['end_date'] = interpret_date(daterange_parts[2])
     app.logger.debug("Setrange parsed {} - {}  dates as {} - {}".format(
-      daterange_parts[0], daterange_parts[1], 
+      daterange_parts[0], daterange_parts[2], 
       flask.session['begin_date'], flask.session['end_date']))
     return flask.redirect(flask.url_for("choose"))
 
