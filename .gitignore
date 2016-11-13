@@ -1,4 +1,5 @@
 # Local
+Makefile.local
 secrets/*
 client_secret.json
 CONFIG.py
