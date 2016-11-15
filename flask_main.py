@@ -355,7 +355,7 @@ def list_events(service, cal_id):
     while True:
         events = service.events().list(calendarId=cal_id, pageToken=page_token, timeMin=flask.session['begin_time'], timeMax=flask.session['end_date'], showDeleted=False, singleEvents=True).execute()
         for event in events['items']:
-            if 'transparency' not in event.keys():# and not event['status'] == 'cancelled':
+            if 'transparency' not in event.keys():
                 # check to see if event is within time constraints
                 app.logger.debug("Event: {} at {}".format(str(event['summary']), str(event['start'])))
                 ev_start_date = str(arrow.get(event['start']['dateTime'])).split('T')[0]
