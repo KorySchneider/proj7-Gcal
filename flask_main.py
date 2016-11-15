@@ -363,12 +363,12 @@ def list_events(service, cal_id):
                     ev_start_time = str(arrow.get(event['start']['dateTime'])).split('T')[1].split('-')[0]
                     ev_end_time = str(arrow.get(event['end']['dateTime'])).split('T')[1].split('-')[0]
                 except KeyError:
-                    if 'date' in event['start'].keys(): # handle all day events (e.g. birthdays)
+                    if 'date' in event['start'].keys(): # handle all-day events (e.g. birthdays)
                         continue
                     else:
                         raise
-                if ev_start_date >= flask.session['begin_date'].split('T')[0] and ev_end_date <= flask.session['end_date'].split('T')[0]:
-                    if ev_start_time >= flask.session['begin_time'].split('T')[1].split('-')[0] and ev_end_time <= flask.session['end_time'].split('T')[1].split('-')[0]:
+                if ev_start_date >= flask.session['begin_date'].split('T')[0] or ev_end_date <= flask.session['end_date'].split('T')[0]:
+                    if ev_start_time >= flask.session['begin_time'].split('T')[1].split('-')[0] or ev_end_time <= flask.session['end_time'].split('T')[1].split('-')[0]:
                         event_list.append(event)
         page_token = events.get('nextPageToken')
         if not page_token:
