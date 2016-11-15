@@ -357,7 +357,6 @@ def list_events(service, cal_id):
         for event in events['items']:
             if 'transparency' not in event.keys():
                 # check to see if event is within time constraints
-                app.logger.debug("Event: {} at {}\nFull event: {}".format(str(event['summary']), str(event['start']), str(event)))
                 try:
                     ev_start_date = str(arrow.get(event['start']['dateTime'])).split('T')[0]
                     ev_end_date = str(arrow.get(event['end']['dateTime'])).split('T')[0]
