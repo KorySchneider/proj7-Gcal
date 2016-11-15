@@ -218,12 +218,7 @@ def getevents():
         for cal in flask.session['calendars']:
             if calendars[i] == cal['summary']:
                 events.extend(list_events(gcal_service, cal['id']))
-                app.logger.debug("Calendar id for {}: {}".format(cal['summary'], cal['id']))
-
-    app.logger.debug("Relevant events found ({}): {}".format(len(events), str(events)))
-
     flask.session['events'] = events
-
     return flask.redirect(flask.url_for('events'))
 
 ####
@@ -358,10 +353,11 @@ def list_events(service, cal_id):
     event_list = []
     page_token = None
     while True:
-        events = service.events().list(calendarId=cal_id, pageToken=page_token, timeMin=flask.session['begin_time'], timeMax=flask.session['end_date']).execute()
+        events = service.events().list(calendarId=cal_id, pageToken=page_token, timeMin=flask.session['begin_time'], timeMax=flask.session['end_date'], showDeleted=False, singleEvents=True).execute()
         for event in events['items']:
-            if 'transparency' not in event.keys():
+            if 'transparency' not in event.keys():# and not event['status'] == 'cancelled':
                 # check to see if event is within time constraints
+                app.logger.debug("Event: {} at {}".format(str(event['summary']), str(event['start'])))
                 ev_start_date = str(arrow.get(event['start']['dateTime'])).split('T')[0]
                 ev_end_date = str(arrow.get(event['end']['dateTime'])).split('T')[0]
                 ev_start_time = str(arrow.get(event['start']['dateTime'])).split('T')[1].split('-')[0]
