@@ -52,7 +52,7 @@
     {% for ev in session.events %}
       <div class="col-md-4"> <form action='/findbusy' method='post'>
           <input type='checkbox' class='ev-checkbox' name="{{ ev.id }}" id="{{ ev.id }}" />
-          <label for="{{ ev.id }}"><b>{{ ev.summary }}</b> from {{ ev.start.dateTime | fmtdatetime}} to {{ ev.end.dateTime | fmtdatetime }}</label>
+          <label for="{{ ev.id }}"><b>{{ ev.summary }}</b> from {{ ev.start.dateTime | fmtdatetime }} to {{ ev.end.dateTime | fmtdatetime }}</label>
       </div>
       {% if loop.index is divisibleby 3 %}
         </div> <div class="row">
