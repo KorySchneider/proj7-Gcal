@@ -47,23 +47,29 @@ $(document).ready(function() {
 });
 
 function calcFreeTimes() {
-    $.getJSON('/_calc_free_times', { meeting_id: $('#meeting_id').val() },
-        function(data) {
-            var html = "";
+    var meeting_id = $('#meeting_id').val();
+    if (meeting_id != '') {
+        // Calculate free times and display them
+        $.getJSON('/_calc_free_times', { meeting_id: meeting_id },
+            function(data) {
+                var html = "";
 
-            html += "<p>We found the following mutual free times.</p>";
-            html += "<br>";
+                html += "<p>We found the following mutual free times.</p>";
+                html += "<br>";
 
-            for (var i=0; i < data.free_times.length; i++) {
-                var t = data.free_times[i];
+                for (var i=0; i < data.free_times.length; i++) {
+                    var t = data.free_times[i];
 
-                html += "From <strong>" + fmtDt(t.start) + "</strong> to <strong>" + fmtDt(t.end) + "</strong>.";
-                html += "<br><br>";
+                    html += "From <strong>" + fmtDt(t.start) + "</strong> to <strong>" + fmtDt(t.end) + "</strong>.";
+                    html += "<br><br>";
+                }
+
+                $('#freetimes').append(html);
             }
-
-            $('#freetimes').append(html);
-        }
-    );
+        );
+    } else {
+        $('#freetimes').append("<p>No times to show!</p>");
+    }
 }
 
 function fmtDt(dt) {

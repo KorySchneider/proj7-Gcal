@@ -47,44 +47,50 @@ $(document).ready(function() {
 });
 
 // TODO
-// handler to delete events
-// update event list (call displayEvents after events are removed from db?)
+// fix db method to delete events
+// update event list after submission (call displayEvents after events are removed from db?)
 function displayEvents() {
-    // Get users events from database and display them
-    $.getJSON('/_get_events', { meeting_id: $('#meeting_id').val() },
-        function(data) {
-            var html = "";
-            html += "<p>Select any events that can be moved to accomodate the meeting.</p>";
-            html += "<button type='button' id='select-all-ev'>Select All</button>";
-            html += "<button type='button' id='deselect-all-ev' style='margin-left: 5px'>Deselect All</button><br><br>";
-            html += "<form action='remove_events' method='post'>";
+    var meeting_id = $('#meeting_id').val();
+    if (meeting_id != '') {
+        // Get users events from database and display them
+        $.getJSON('/_get_events', { meeting_id: meeting_id },
+            function(data) {
+                var html = "";
+                html += "<p>Select any events that can be moved to accomodate the meeting.</p>";
+                html += "<button type='button' id='select-all-ev'>Select All</button>";
+                html += "<button type='button' id='deselect-all-ev' style='margin-left: 5px'>Deselect All</button><br><br>";
+                html += "<form action='remove_events' method='post'>";
 
-            for (var i=0; i < data.events.length; i++) {
-                var e = data.events[i];
+                for (var i=0; i < data.events.length; i++) {
+                    var e = data.events[i];
 
-                html += "<input type='checkbox' class='ev-checkbox' name='" + e.id + "' id='" + e.id + "' />";
-                html += "<label for='" + e.id + "'><strong>" + e.summary + "</strong></label>";
-                html += "<br>";
-                html += "from " + fmtDt(e.start) + " to " + fmtDt(e.end);
-                html += "<br><br>";
+                    html += "<input type='checkbox' class='ev-checkbox' name='" + e.id + "' id='" + e.id + "' />";
+                    html += "<label for='" + e.id + "'><strong>" + e.summary + "</strong></label>";
+                    html += "<br>";
+                    html += "from " + fmtDt(e.start) + " to " + fmtDt(e.end);
+                    html += "<br><br>";
+                }
+
+                html += "<br><button type='submit' id='remove-events-btn'>Remove Selected Events</button></form>";
+                html += "<br><button type='button' id='continue-btn'>Continue</button>";
+
+                $('#event-list').append(html);
+
+                $('#select-all-ev').click(function() {
+                    toggleCheckboxes($('.ev-checkbox'), true);
+                });
+                $('#deselect-all-ev').click(function() {
+                    toggleCheckboxes($('.ev-checkbox'), false);
+                });
+
+                $('#continue-btn').click(function() {
+                    location.href = '/freetimes';
+                });
             }
-
-            html += "<br><button type='submit' id='remove-events-btn'>Remove Selected Events</button></form>";
-            html += "<br><button type='button' id='continue-btn'>Continue</button>";
-
-            $('#event-list').append(html);
-
-            $('#select-all-ev').click(function() {
-                toggleCheckboxes($('.ev-checkbox'), true);
-            });
-            $('#deselect-all-ev').click(function() {
-                toggleCheckboxes($('.ev-checkbox'), false);
-            });
-
-            $('#continue-btn').click(function() {
-                location.href = '/freetimes';
-            });
-        });
+        );
+    } else {
+        $('#event-list').append("<p>No events to show!</p>");
+    }
 }
 
 function fmtDt(dt) {
