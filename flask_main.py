@@ -83,7 +83,9 @@ def freetimes():
 
 @app.route('/_calc_free_times')
 def _calc_free_times():
+    app.logger.debug("Entering _calc_free_times")
     meeting_id = request.args.get('meeting_id')
+    meeting_range = db_functions.get_meeting_range(meeting_id)
     events = db_functions.get_all_events(meeting_id)
     sorted_events = sorted(events, key=itemgetter('start'))
     free_times = []
@@ -92,9 +94,26 @@ def _calc_free_times():
             free = { 'start': sorted_events[i]['end'], 'end': sorted_events[i+1]['start'] }
             free_times.append(free)
 
+    def separate_free_times(interval, i_list):
+        if str(arrow.get(interval['end']).date()) > str(arrow.get(interval['start']).date()):
+            s = arrow.get(interval['start'])
+            i1_end = arrow.get(meeting_range['end']).replace(year=s.year, month=s.month, day=s.day).isoformat()
+            i2_start = arrow.get(meeting_range['start']).replace(year=s.year, month=s.month, day=s.day).replace(days=+1).isoformat()
 
-    app.logger.debug(free_times)
-    return jsonify(free_times = free_times)
+            i1 = { 'start': interval['start'], 'end': i1_end }
+            i2 = { 'start': i2_start, 'end': interval['end'] }
+
+            i_list.append(i1)
+            separate_free_times(i2, i_list)
+        else:
+            i_list.append(interval)
+
+    split_free_times = []
+    for ft in free_times:
+        separate_free_times(ft, split_free_times)
+
+    return jsonify(free_times = split_free_times)
+
 
 @app.route('/_get_events')
 def _get_events():
@@ -263,7 +282,8 @@ def getevents():
     flask.session['meeting_id'] = meeting_id
     flask.session['user_id'] = user_id
 
-    db_functions.create_meeting(meeting_id)
+    meeting_range = { 'start': flask.session['begin_range'], 'end': flask.session['end_range'] }
+    db_functions.create_meeting(meeting_id, meeting_range)
     db_functions.add_events(meeting_id, user_id, formatted_events)
 
     return flask.redirect(flask.url_for('events'))

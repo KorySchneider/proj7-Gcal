@@ -28,12 +28,12 @@ def connect():
         print("Failure opening database. Is Mongo running? Correct password?")
         sys.exit(1)
 
-def create_meeting(meeting_id):
+def create_meeting(meeting_id, meeting_range):
     """
     Create new meeting object in database
     """
     global collection
-    collection.insert({ '_id': meeting_id, 'created': arrow.now().isoformat(), 'users': [] })
+    collection.insert({ '_id': meeting_id, 'created': arrow.now().isoformat(), 'users': [], 'meeting_range': meeting_range })
 
 def add_events(meeting_id, user_id, events):
     """
@@ -73,21 +73,37 @@ def get_all_events(meeting_id):
         all_events.extend(user['events'])
     return all_events
 
+def get_meeting_range(meeting_id):
+    """
+    Return a representation of the time constraints set by the creator of the meeting.
+
+    Looks like: { 'start': <datetime_iso_string>, 'end': <datetime_iso_string> }
+    That is, the beginning of the date range at the start of the time range to the end of
+    the date range at the end of the time range.
+    """
+    global collection
+    meeting = collection.find_one({ '_id': meeting_id })
+    return meeting['meeting_range']
+
 """
 Meeting document structure:
 
 {
-  _id: uuid,
-  created: datetime,
+  _id: <uuid>,
+  created: <datetime_iso_string>,
+  meeting_range: {
+    'start': <datetime_iso_string>,
+    'end': <datetime_iso_string>
+  },
   users: [
     {
-      user_id: uuid,
+      user_id: <uuid>,
       events: [
         {
           event_id: id (from gcal),
-          summary: string,
-          start: datetime,
-          end: datetime
+          summary: <string>,
+          start: <datetime_iso_string>,
+          end: <datetime_iso_string>
         },
         ...
       ]
