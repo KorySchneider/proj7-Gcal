@@ -22,6 +22,12 @@
     <div class="container">
         <input type='hidden' id='meeting_id' value="{{ session.meeting_id }}" />
 
+        <div id='navbar'>
+            <button type='button' id='times-calendars-btn'>Times &amp; Calendars</button>
+            <button type='button' id='events-btn'>Events</button>
+            <button type='button' class='nav-active' id='free-times-btn'>Free Times</button>
+        </div>
+
         <h2>Free Times</h2>
         <div id='freetimes'></div>
     </div>
@@ -29,6 +35,14 @@
 
 <script>
 $(document).ready(function() {
+    $('#times-calendars-btn').click(function() {
+        location.href = '/choose';
+    });
+
+    $('#events-btn').click(function() {
+        location.href = '/events';
+    });
+
     calcFreeTimes();
 });
 
