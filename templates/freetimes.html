@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html lang="en"> <head>
+  <title>Appointments</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <link rel="stylesheet" type="text/css" href="/static/css/busy.css" />
+  
+  <!-- bootstrap -->
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap/latest/css/bootstrap.css" />
+  
+  <!-- jquery from a content distribution network; probably cached -->
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  
+  <!-- moment.js -->
+  <script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+</head>
+
+<body>
+    <div class="container">
+        <input type='hidden' id='meeting_id' value="{{ session.meeting_id }}" />
+
+        <h2>Free Times</h2>
+        <div id='freetimes'></div>
+    </div>
+</body>
+
+<script>
+$(document).ready(function() {
+    calcFreeTimes();
+});
+
+function calcFreeTimes() {
+    $.getJSON('/_calc_free_times', { meeting_id: $('#meeting_id').val() },
+        function(data) {
+            var html = "";
+
+            html += "<p>We found the following mutual free times.</p>";
+            html += "<br>";
+
+            for (var i=0; i < data.free_times.length; i++) {
+                var t = data.free_times[i];
+
+                html += "From <strong>" + fmtDt(t.start) + "</strong> to <strong>" + fmtDt(t.end) + "</strong>.";
+                html += "<br><br>";
+            }
+
+            $('#freetimes').append(html);
+        }
+    );
+}
+
+function fmtDt(dt) {
+  return moment(dt).format('hh:mm A on MM/DD');
+}
+</script>
+
+</html>

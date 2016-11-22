@@ -2,10 +2,12 @@ import flask
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask import jsonify
 import uuid
 
 import json
 import logging
+from operator import itemgetter
 
 # Date handling
 import arrow # Replacement for datetime, based on moment.js
@@ -19,6 +21,10 @@ import httplib2   # used in oauth2 flow
 
 # Google API for services
 from apiclient import discovery
+
+# Database interaction
+import db_functions
+db_functions.connect() # initialize db connection
 
 ###
 # Globals
@@ -53,25 +59,49 @@ def index():
 @app.route("/choose")
 def choose():
     ## We'll need authorization to list calendars
-    app.logger.debug("Checking credentials for Google calendar access")
     credentials = valid_credentials()
     if not credentials:
-      app.logger.debug("Redirecting to authorization")
       return flask.redirect(flask.url_for('oauth2callback'))
 
     gcal_service = get_gcal_service(credentials)
-    app.logger.debug("Returned from get_gcal_service")
     flask.session['calendars'] = list_calendars(gcal_service)
-
-    #for cal in flask.session['calendars']:
-    #    app.logger.debug(json.dumps(str(cal), indent=2, sort_keys=True))
-
     return render_template('index.html')
 
 @app.route("/events")
 def events():
     app.logger.debug("Entering events page")
     return render_template('events.html')
+
+@app.route("/freetimes")
+def freetimes():
+    app.logger.debug("Entering freetimes page")
+    return render_template('freetimes.html')
+
+###
+# Ajax handlers
+###
+
+@app.route('/_calc_free_times')
+def _calc_free_times():
+    meeting_id = request.args.get('meeting_id')
+    events = db_functions.get_all_events(meeting_id)
+    sorted_events = sorted(events, key=itemgetter('start'))
+    free_times = []
+    for i in range(len(sorted_events) - 1):
+        if sorted_events[i]['end'] < sorted_events[i+1]['start']:
+            free = { 'start': sorted_events[i]['end'], 'end': sorted_events[i+1]['start'] }
+            free_times.append(free)
+
+
+    app.logger.debug(free_times)
+    return jsonify(free_times = free_times)
+
+@app.route('/_get_events')
+def _get_events():
+    app.logger.debug("Entering _get_events handler")
+    meeting_id = request.args.get('meeting_id')
+    events = db_functions.get_user_events(meeting_id, flask.session['user_id'])
+    return jsonify(events = events)
 
 ####
 #
@@ -199,16 +229,23 @@ def setrange():
     flask.session['begin_time'] = interpret_time(request.form.get('begin_time'))
     flask.session['end_time'] = interpret_time(request.form.get('end_time'))
 
+    begin_date = arrow.get(flask.session['begin_date'])
+    begin_time = arrow.get(flask.session['begin_time'])
+    flask.session['begin_range'] = begin_time.replace(year=begin_date.year, month=begin_date.month, day=begin_date.day).isoformat()
+
+    end_time = arrow.get(flask.session['end_time'])
+    end_date = arrow.get(flask.session['end_date'])
+    flask.session['end_range'] = end_time.replace(year=end_date.year, month=end_date.month, day=end_date.day).isoformat()
+
     return flask.redirect(flask.url_for("choose"))
 
 @app.route('/getevents', methods=['POST'])
 def getevents():
     """
-    User has selected which calendars are relevant, this function puts relevant events into flask.session['calendars']
+    User has selected which calendars are relevant, this function puts relevant events into flask.session['events']
     """
     app.logger.debug("Entering getevents")
     calendars = list(dict(request.form).keys())
-    app.logger.debug("Calendars to get events for: {}".format(calendars))
 
     credentials = valid_credentials()
     gcal_service = get_gcal_service(credentials)
@@ -218,7 +255,52 @@ def getevents():
         for cal in flask.session['calendars']:
             if calendars[i] == cal['summary']:
                 events.extend(list_events(gcal_service, cal['id']))
-    flask.session['events'] = events
+
+    formatted_events = format_events(events)
+    meeting_id = str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+
+    flask.session['meeting_id'] = meeting_id
+    flask.session['user_id'] = user_id
+
+    db_functions.create_meeting(meeting_id)
+    db_functions.add_events(meeting_id, user_id, formatted_events)
+
+    return flask.redirect(flask.url_for('events'))
+
+def format_events(events):
+    """
+    Format events for storage in database.
+
+    A formatted event looks like:
+    {
+      id: eventid,
+      summary: string,
+      start: datetime,
+      end: datetime,
+    }
+    """
+    app.logger.debug('Entering format_events')
+    formatted_events = []
+    for event in events:
+        fevent = {key:event[key] for key in ['id', 'summary']}
+        if 'date' in event['start'].keys():
+            fevent['start'] = arrow.get(event['start']['date']).isoformat()
+        else:
+            fevent['start'] = event['start']['dateTime']
+        if 'date' in event['end'].keys():
+            fevent['end'] = arrow.get(event['end']['date']).replace(days=+1).isoformat()
+        else:
+            fevent['end'] = event['end']['dateTime']
+
+        formatted_events.append(fevent)
+    return formatted_events
+
+@app.route('/remove_events', methods=['POST'])
+def remove_events():
+    events_to_remove = list(dict(request.form).keys()) # list of event IDs
+    for event in events_to_remove:
+        db_functions.remove_event(flask.session['meeting_id'], flask.session['user_id'], event)
     return flask.redirect(flask.url_for('events'))
 
 ####
@@ -252,7 +334,6 @@ def interpret_time( text ):
     May throw exception if time can't be interpreted. In that
     case it will also flash a message explaining accepted formats.
     """
-    app.logger.debug("Decoding time '{}'".format(text))
     time_formats = ["ha", "h:mma",  "h:mm a", "H:mm"]
     try:
         as_arrow = arrow.get(text, time_formats).replace(tzinfo=tz.tzlocal())
@@ -311,7 +392,7 @@ def list_calendars(service):
     calendar_list = service.calendarList().list().execute()["items"]
     result = [ ]
     for cal in calendar_list:
-        kind = cal["kind"]
+        #kind = cal["kind"]
         id = cal["id"]
         if "description" in cal:
             desc = cal["description"]
@@ -324,11 +405,11 @@ def list_calendars(service):
 
 
         result.append(
-          { "kind": kind,
-            "id": id,
-            "summary": summary,
+          { "id": id,
+            #"kind": kind,
             "selected": selected,
-            "primary": primary
+            "primary": primary,
+            "summary": summary
             })
     return sorted(result, key=cal_sort_key)
 
@@ -353,7 +434,7 @@ def list_events(service, cal_id):
     event_list = []
     page_token = None
     while True:
-        events = service.events().list(calendarId=cal_id, pageToken=page_token, timeMin=flask.session['begin_time'], timeMax=flask.session['end_date'], showDeleted=False, singleEvents=True).execute()
+        events = service.events().list(calendarId=cal_id, pageToken=page_token, timeMin=flask.session['begin_range'], timeMax=flask.session['end_range'], showDeleted=False, singleEvents=True).execute()
         for event in events['items']:
             if 'transparency' not in event.keys():
                 # check to see if event is within time constraints
