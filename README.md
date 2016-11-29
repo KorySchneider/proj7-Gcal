@@ -1,4 +1,4 @@
-# proj6-Gcal
+# Google calendar project
 _Kory Schneider_
 
 _CIS 322, Fall 2016_
@@ -17,11 +17,12 @@ Then set it up and run it:
 
     $ bash ./configure && make service
 
-
 ## Usage
 `$ make service` will start a Green Unicorn (gunicorn) server, which is more suitable for running over a long period of time.
 
 `$ make run` will launch the server in debugging mode.
+
+`$ make test` will run the test suite.
 
 ## Credit
 
