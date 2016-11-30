@@ -284,7 +284,7 @@ def getevents():
 
     meeting_range = { 'start': flask.session['begin_range'], 'end': flask.session['end_range'] }
     db_functions.create_meeting(meeting_id, meeting_range)
-    db_functions.add_events(meeting_id, user_id, formatted_events)
+    db_functions.add_user_with_events(meeting_id, user_id, formatted_events)
 
     return flask.redirect(flask.url_for('events'))
 
