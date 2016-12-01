@@ -21,6 +21,7 @@
 <body>
     <div class="container">
         <input type='hidden' id='meeting_id' value="{{ session.meeting_id }}" />
+        <input type='hidden' id='user_id' value="{{ session.user_id }}" />
 
         <div id='navbar'>
             <button type='button' id='times-calendars-btn'>Times &amp; Calendars</button>
@@ -51,9 +52,10 @@ $(document).ready(function() {
 // update event list after submission (call displayEvents after events are removed from db?)
 function displayEvents() {
     var meeting_id = $('#meeting_id').val();
-    if (meeting_id != '') {
+    var user_id = $('#user_id').val();
+    if (meeting_id != '' && user_id != '') {
         // Get users events from database and display them
-        $.getJSON('/_get_events', { meeting_id: meeting_id },
+        $.getJSON('/_get_events', { meeting_id: meeting_id, user_id: user_id },
             function(data) {
                 var html = "";
                 html += "<p>Select any events that can be moved to accomodate the meeting.</p>";
@@ -76,6 +78,7 @@ function displayEvents() {
 
                 $('#event-list').append(html);
 
+                // Button handlers
                 $('#select-all-ev').click(function() {
                     toggleCheckboxes($('.ev-checkbox'), true);
                 });

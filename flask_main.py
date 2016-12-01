@@ -119,7 +119,8 @@ def _calc_free_times():
 def _get_events():
     app.logger.debug("Entering _get_events handler")
     meeting_id = request.args.get('meeting_id')
-    events = db_functions.get_user_events(meeting_id, flask.session['user_id'])
+    user_id = request.args.get('user_id')
+    events = db_functions.get_user_events(meeting_id, user_id)
     return jsonify(events = events)
 
 ####
