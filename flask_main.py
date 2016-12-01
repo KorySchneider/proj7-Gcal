@@ -454,7 +454,12 @@ def list_events(service, cal_id):
     event_list = []
     page_token = None
     while True:
-        events = service.events().list(calendarId=cal_id, pageToken=page_token, timeMin=flask.session['begin_range'], timeMax=flask.session['end_range'], showDeleted=False, singleEvents=True).execute()
+        events = service.events().list(calendarId=cal_id,
+                                       pageToken=page_token,
+                                       timeMin=flask.session['begin_range'],
+                                       timeMax=flask.session['end_range'],
+                                       showDeleted=False,
+                                       singleEvents=True).execute()
         for event in events['items']:
             if 'transparency' not in event.keys():
                 # check to see if event is within time constraints
