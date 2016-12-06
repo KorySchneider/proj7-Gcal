@@ -78,7 +78,7 @@ service:	env
 ## Currently 'nose' takes care of this, but in future we
 ## might add test cases that can't be run under 'nose'
 ##
-test:	env
+test:	env database_exists
 	$(INVENV) nosetests
 
 
