@@ -48,13 +48,22 @@ INVENV = . env/bin/activate ;
 
 # 'make run' runs Flask's built-in test server,
 #  with debugging turned on unless it is unset in CONFIG.py
-# 
-run:	env
-	($(INVENV) python3 flask_main.py) ||  true
+#
+run:     env  database_exists
+	($(INVENV) python3 flask_main.py) || true
 
-# 'make service' runs as a background job under the gunicorn 
-#  WSGI server. FIXME:  A real production service would use 
-#  NGINX in combination with gunicorn to prevent DOS attacks. 
+# Database stuff
+database_exists:
+	($(INVENV) python3 create_db.py) || true
+	touch database_exists # Using existence of this file as a flag
+
+destroy:
+	($(INVENV)  python3 destroy_db.py) || true
+	rm database_exists
+
+# 'make service' runs as a background job under the gunicorn
+#  WSGI server. FIXME:  A real production service would use
+#  NGINX in combination with gunicorn to prevent DOS attacks.
 #
 #  For now we are running gunicorn on its default port of 8000.
 #  FIXME: Configuration builder could put the desired port number
