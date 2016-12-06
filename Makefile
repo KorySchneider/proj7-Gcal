@@ -104,5 +104,4 @@ veryclean:
 	rm -f CONFIG.py
 	rm -rf env
 	rm -f Makefile.local
-
-
+	rm database_exists
