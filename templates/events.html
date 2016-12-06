@@ -76,7 +76,7 @@ function displayEvents() {
                 html += "<br><button type='submit' id='remove-events-btn'>Remove Selected Events</button></form>";
                 html += "<br><button type='button' id='continue-btn'>Continue</button>";
 
-                $('#event-list').append(html);
+                $('#event-list').html(html);
 
                 // Button handlers
                 $('#select-all-ev').click(function() {
