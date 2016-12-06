@@ -33,14 +33,14 @@ def create_meeting(meeting_id, meeting_range):
     Create new meeting object in database
     """
     global collection
-    collection.insert({ '_id': meeting_id, 'created': arrow.now().isoformat(), 'users': [], 'meeting_range': meeting_range })
+    return collection.insert({ '_id': meeting_id, 'created': arrow.now().isoformat(), 'users': [], 'meeting_range': meeting_range })
 
 def add_user_with_events(meeting_id, user_id, events):
     """
     Add an array of events to a meeting for a user
     """
     global collection
-    collection.update({ '_id': meeting_id },
+    return collection.update({ '_id': meeting_id },
             { '$push': { 'users': { 'user_id': user_id, 'events': events } } } )
 
 def remove_event(meeting_id, user_id, event_id):
@@ -48,7 +48,7 @@ def remove_event(meeting_id, user_id, event_id):
     Remove one event from a meeting for a user
     """
     global collection
-    collection.update({ '_id': meeting_id, 'users.user_id': user_id },
+    return collection.update({ '_id': meeting_id, 'users.user_id': user_id },
             { '$pull': { 'users.$.events': { 'event_id': event_id } } } )
 
 def get_user_events(meeting_id, user_id):
