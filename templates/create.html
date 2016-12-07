@@ -69,13 +69,15 @@
         <fieldset>
             <legend>Time Constraints</legend>
             <p>Select the date range within which your meeting should be scheduled.<br>The time range applies to each day.</p>
-            <input type="text" name="daterange"
+            <label for='daterange'>Date range: </label>
+            <input type="text" name="daterange" id='daterange'
                 {% if session.daterange is defined %}
                      value="{{session.daterange}}"
                 {% endif %}
                 class="pull-down input-box"
             >
             <br>
+            <label for='begin_time'>Time range: </label>
             <input type="time" class="input-box" id="begin_time" name="begin_time" value="{% if session['begin_time'] is defined %}{{ session['begin_time'] | fmttime }}{% else %}09:00{% endif %}" />
             -
             <input type="time" class="input-box" id="end_time" name="end_time" value="{% if session['end_time'] is defined %}{{ session['end_time'] | fmttime }}{% else %}17:00{% endif %}" />
