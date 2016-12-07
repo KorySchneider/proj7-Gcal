@@ -267,7 +267,7 @@ def setrange():
 @app.route('/getevents', methods=['POST'])
 def getevents():
     """
-    User has selected which calendars are relevant, this function puts relevant events into flask.session['events']
+    Get user events from google calendar
     """
     app.logger.debug("Entering getevents")
     calendars = list(dict(request.form).keys())
@@ -288,7 +288,9 @@ def getevents():
     flask.session['meeting_id'] = meeting_id
     flask.session['user_id'] = user_id
 
-    meeting_range = { 'start': flask.session['begin_range'], 'end': flask.session['end_range'] }
+    #meeting_range = { 'start': flask.session['begin_range'], 'end': flask.session['end_range'] }
+    meeting_range = { 'begin_date': flask.session['begin_date'], 'end_date': flask.session['end_date'],
+                      'begin_time': flask.session['begin_time'], 'end_time': flask.session['end_time'] }
     db_functions.create_meeting(meeting_id, meeting_range)
     db_functions.add_user_with_events(meeting_id, user_id, formatted_events)
 
