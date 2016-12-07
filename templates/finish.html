@@ -25,10 +25,10 @@
         <h2>Finish</h2>
         <br><br>
         <p>Share the link below with those you want to schedule a meeting with.</p>
-        <input id='shareable-link' size='53' readonly />
+        <input id='shareable-link' size='50' readonly />
         <br><br>
         <button type='button' id='copy-link-btn'>Copy to Clipboard</button>
-        <p><small>this button doesn't work right now</small></p>
+        <p><small>this button only selects the text right now</small></p>
     </div>
 </body>
 
@@ -36,9 +36,18 @@
 $(document).ready(function() {
     $('#shareable-link').val(window.location.protocol + '//' + window.location.host + '/add/' + $('#meeting_id').val());
     $('#copy-link-btn').click(function() {
-        //TODO add functionality
+        $('#shareable-link').select();
+        //TODO copy text
     });
 });
 </script>
+
+<style>
+#shareable-link {
+    font-size: 28;
+    text-align: center;
+    padding: 5px;
+}
+</style>
 
 </html>

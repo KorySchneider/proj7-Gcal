@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html lang="en"> <head>
+<title>Appointments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" type="text/css"
+     href="//cdn.jsdelivr.net/bootstrap/latest/css/bootstrap.css"
+/>
+
+
+<link rel="stylesheet" type="text/css"
+    href="/static/css/busy.css"
+/>
+
+<!-- jquery from a content distribution network; probably cached -->
+<script type="text/javascript"
+     src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js">
+</script>
+
+<script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+
+<script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+</head>
+
+<body>
+    <div class='container'>
+
+        <div id='navbar'>
+            <button type='button' class='nav-active' id='times-calendars-btn'>Times &amp; Calendars</button>
+            <button type='button' id='events-btn'>Events</button>
+            <button type='button' id='free-times-btn'>Free Times</button>
+        </div>
+
+        {% if session.calendars is defined %}
+        <div class="row">
+          <h2>Calendars</h2>
+          <br><br>
+          <p>Deselect any calendars that are not relevant, then click 'Continue'.</p>
+          <button type='button' id='select-all-cal'>Select All</button>
+          <button type='button' id='deselect-all-cal'>Deselect All</button>
+          <br><br>
+          {% for cal in session.calendars if cal.selected %}
+          <div class="col-md-4"> <form action='/getevents' method='post'>
+            <input type='checkbox' class='cal-checkbox' name="{{ cal.summary }}" id="{{ cal.id }}" checked='true' />
+            <label for="{{ cal.id }}">{{ cal.summary }}</label>
+          </div>
+            {% if loop.index is divisibleby 3 %}
+              </div> <div class="row">
+            {% endif %}
+          {% endfor %}
+        </div>
+        <br>
+        <button type='submit' id='cal-continue'>Continue</button>
+        </form>
+        {% else %}
+        <p>No calendars to show!</p>
+        {% endif %}
+
+    </div> <!-- container -->
+</body>
+
+<style>
+h2 {
+    text-decoration: underline;
+}
+</style>
+
+</html>

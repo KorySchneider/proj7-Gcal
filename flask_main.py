@@ -51,10 +51,20 @@ APPLICATION_NAME = 'MeetMe class project'
 @app.route("/")
 @app.route("/index")
 def index():
-  app.logger.debug("Entering index")
+    app.logger.debug("Entering index page")
+    return render_template('index.html')
+
+@app.route("/create")
+def create():
+  app.logger.debug("Entering create page")
   if 'begin_date' not in flask.session:
     init_session_values()
-  return render_template('index.html')
+  return render_template('create.html')
+
+@app.route("/calendars")
+def calendars():
+    app.logger.debug("Entering calendars page")
+    return render_template('calendars.html')
 
 @app.route("/choose")
 def choose():
@@ -65,7 +75,7 @@ def choose():
 
     gcal_service = get_gcal_service(credentials)
     flask.session['calendars'] = list_calendars(gcal_service)
-    return render_template('index.html')
+    return render_template('index.html') # TODO this should be calendars page?
 
 @app.route("/events")
 def events():
@@ -81,6 +91,12 @@ def freetimes():
 def finish():
     app.logger.debug("Entering finish page")
     return render_template('finish.html')
+
+@app.route("/add/<uuid:meeting_id>")
+def add_user(meeting_id):
+    app.logger.debug("Entering add_user with meeting_id {}".format(meeting_id))
+    flask.session['meeting_id'] = meeting_id
+    return render_template('calendars.html')
 
 ###
 # Ajax handlers
@@ -273,7 +289,7 @@ def setrange():
     end_date = arrow.get(flask.session['end_date'])
     flask.session['end_range'] = end_time.replace(year=end_date.year, month=end_date.month, day=end_date.day).isoformat()
 
-    return flask.redirect(flask.url_for("choose"))
+    return flask.redirect(flask.url_for("calendars"))
 
 @app.route('/getevents', methods=['POST'])
 def getevents():
