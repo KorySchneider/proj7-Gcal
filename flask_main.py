@@ -472,18 +472,25 @@ def list_events(service, cal_id):
             if 'transparency' not in event.keys():
                 # check to see if event is within time constraints
                 try:
-                    ev_start_date = str(arrow.get(event['start']['dateTime'])).split('T')[0]
-                    ev_end_date = str(arrow.get(event['end']['dateTime'])).split('T')[0]
-                    ev_start_time = str(arrow.get(event['start']['dateTime'])).split('T')[1].split('-')[0]
-                    ev_end_time = str(arrow.get(event['end']['dateTime'])).split('T')[1].split('-')[0]
+                    ev_start_date = str(arrow.get(event['start']['dateTime']).date())
+                    ev_end_date = str(arrow.get(event['end']['dateTime']).date())
+                    ev_start_time = str(arrow.get(event['start']['dateTime']).time())
+                    ev_end_time = str(arrow.get(event['end']['dateTime']).time())
                 except KeyError:
-                    if 'date' in event['start'].keys(): # handle all-day events (e.g. birthdays)
+                    if 'date' in event['start'].keys(): # all-day events
+                        event_list.append(event)
                         continue
                     else:
                         raise
-                if ev_start_date >= flask.session['begin_date'].split('T')[0] or ev_end_date <= flask.session['end_date'].split('T')[0]:
-                    if ev_start_time >= flask.session['begin_time'].split('T')[1].split('-')[0] or ev_end_time <= flask.session['end_time'].split('T')[1].split('-')[0]:
+
+                if ev_start_date <= str(arrow.get(flask.session['end_range']).date()) and ev_start_date >= str(arrow.get(flask.session['begin_range']).date()):
+                    if ev_start_time >= str(arrow.get(flask.session['begin_range']).time()) and ev_end_time <= str(arrow.get(flask.session['end_range']).time()):
                         event_list.append(event)
+                    elif ev_start_time <= str(arrow.get(flask.session['begin_range']).time()) and ev_end_time >= str(arrow.get(flask.session['begin_range']).time()): # overlap begin time
+                        event_list.append(event)
+                    elif ev_end_time >= str(arrow.get(flask.session['end_range']).time()) and ev_start_time <= str(arrow.get(flask.session['end_range']).time()):
+                        event_list.append(event)
+
         page_token = events.get('nextPageToken')
         if not page_token:
             break
