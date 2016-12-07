@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html lang="en"> <head>
+  <title>Appointments</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <link rel="stylesheet" type="text/css" href="/static/css/busy.css" />
+  
+  <!-- bootstrap -->
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap/latest/css/bootstrap.css" />
+  
+  <!-- jquery from a content distribution network; probably cached -->
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  
+  <!-- moment.js -->
+  <script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  
+  <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+</head>
+
+<body>
+    <div class='container'>
+        <input type='hidden' id='meeting_id' value="{{ session.meeting_id }}" />
+
+        <h2>Finish</h2>
+        <br><br>
+        <p>Share the link below with those you want to schedule a meeting with.</p>
+        <input id='shareable-link' size='53' readonly />
+        <br><br>
+        <button type='button' id='copy-link-btn'>Copy to Clipboard</button>
+        <p><small>this button doesn't work right now</small></p>
+    </div>
+</body>
+
+<script>
+$(document).ready(function() {
+    $('#shareable-link').val(window.location.protocol + '//' + window.location.host + '/add/' + $('#meeting_id').val());
+    $('#copy-link-btn').click(function() {
+        //TODO add functionality
+    });
+});
+</script>
+
+</html>

@@ -64,7 +64,13 @@ function calcFreeTimes() {
                     html += "<br><br>";
                 }
 
+                html += "<button type='button' id='finish-btn'>Finish</button>";
+
                 $('#freetimes').append(html);
+
+                $('#finish-btn').click(function() {
+                    location.href = '/finish';
+                });
             }
         );
     } else {
@@ -76,5 +82,3 @@ function fmtDt(dt) {
   return moment(dt).format('hh:mm A on MM/DD');
 }
 </script>
-
-</html>

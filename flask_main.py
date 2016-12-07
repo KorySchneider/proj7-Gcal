@@ -77,12 +77,18 @@ def freetimes():
     app.logger.debug("Entering freetimes page")
     return render_template('freetimes.html')
 
+@app.route("/finish")
+def finish():
+    app.logger.debug("Entering finish page")
+    return render_template('finish.html')
+
 ###
 # Ajax handlers
 ###
 
 @app.route('/_calc_free_times')
 def _calc_free_times():
+    # TODO handle all-day events
     app.logger.debug("Entering _calc_free_times")
     meeting_id = request.args.get('meeting_id')
     meeting_range = db_functions.get_meeting_range(meeting_id)
@@ -97,14 +103,19 @@ def _calc_free_times():
     def separate_free_times(interval, i_list):
         if str(arrow.get(interval['end']).date()) > str(arrow.get(interval['start']).date()):
             s = arrow.get(interval['start'])
-            i1_end = arrow.get(meeting_range['end']).replace(year=s.year, month=s.month, day=s.day).isoformat()
-            i2_start = arrow.get(meeting_range['start']).replace(year=s.year, month=s.month, day=s.day).replace(days=+1).isoformat()
+            i1_end = arrow.get(meeting_range['end_time']).replace(year=s.year, month=s.month, day=s.day).isoformat()
+            i2_start = arrow.get(meeting_range['begin_time']).replace(year=s.year, month=s.month, day=s.day).replace(days=+1).isoformat()
 
             i1 = { 'start': interval['start'], 'end': i1_end }
             i2 = { 'start': i2_start, 'end': interval['end'] }
 
-            i_list.append(i1)
-            separate_free_times(i2, i_list)
+            if not str(arrow.get(interval['start']).time()) == str(arrow.get(i1_end).time()):
+                i_list.append(i1)
+
+            if str(arrow.get(i2_start).time()) > str(arrow.get(interval['end']).time()) or str(arrow.get(i2_start).time()) == str(arrow.get(interval['end']).time()):
+                return
+            else:
+                separate_free_times(i2, i_list)
         else:
             i_list.append(interval)
 
@@ -478,7 +489,11 @@ def list_events(service, cal_id):
                     ev_end_time = str(arrow.get(event['end']['dateTime']).time())
                 except KeyError:
                     if 'date' in event['start'].keys(): # all-day events
-                        event_list.append(event)
+                        # TODO
+                        #formatted_event = event
+                        #formatted_event['start'] = str(arrow.get(event['start']['date']))
+                        #formatted_event['end'] = str(arrow.get(event['end']['date']))
+                        #event_list.append(formatted_event)
                         continue
                     else:
                         raise
