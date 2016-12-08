@@ -76,7 +76,6 @@ def choose():
 
     gcal_service = get_gcal_service(credentials)
     flask.session['calendars'] = list_calendars(gcal_service)
-    #return render_template('calendars.html')
     return flask.redirect(flask.url_for("calendars"))
 
 @app.route("/events")
@@ -319,7 +318,6 @@ def setrange():
     """
     app.logger.debug("Entering setrange")
     daterange = request.form.get('daterange')
-    flask.session['daterange'] = daterange
     daterange_parts = daterange.split()
 
     flask.session['begin_date'] = interpret_date(daterange_parts[0])
