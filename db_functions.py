@@ -35,6 +35,20 @@ def create_meeting(meeting_id, meeting_range):
     global collection
     return collection.insert({ '_id': meeting_id, 'created': arrow.now().isoformat(), 'users': [], 'meeting_range': meeting_range })
 
+def replace_meeting(meeting_id, replacement_doc):
+    """
+    Replace a meeting document
+    """
+    global collection
+    return collection.update({ '_id': meeting_id }, replacement_doc)
+
+def get_meeting(meeting_id):
+    """
+    Return the entire meeting object
+    """
+    global collection
+    return collection.find_one({ '_id': meeting_id })
+
 def add_user_with_events(meeting_id, user_id, events):
     """
     Add an array of events to a meeting for a user
@@ -48,7 +62,6 @@ def remove_event(meeting_id, user_id, event_id):
     Remove one event from a meeting for a user
     """
     global collection
-    print(collection.find_one({ '_id': meeting_id, 'users.user_id': user_id}))
     return collection.update({ '_id': meeting_id, 'users.user_id': user_id },
             { '$pull': { 'users.$.events': { 'event_id': event_id } } } )
 
