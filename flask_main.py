@@ -338,13 +338,16 @@ def setrange():
     flask.session['end_range'] = end_time.replace(year=end_date.year, month=end_date.month, day=end_date.day).isoformat()
 
     # Create empty meeting in database
+    meeting_desc = request.form.get('meeting-desc')
+    meeting_length = { 'hours': request.form.get('meeting-hrs'), 'minutes': request.form.get('meeting-mins') }
     meeting_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
     flask.session['meeting_id'] = meeting_id
     flask.session['user_id'] = user_id
+    flask.session['user_name'] = request.form.get('creator-name')
     meeting_range = { 'begin_date': flask.session['begin_date'], 'end_date': flask.session['end_date'],
                       'begin_time': flask.session['begin_time'], 'end_time': flask.session['end_time'] }
-    db_functions.create_meeting(meeting_id, meeting_range)
+    db_functions.create_meeting(meeting_id, meeting_range, meeting_desc, meeting_length)
 
     return flask.redirect(flask.url_for("choose"))
 
@@ -393,7 +396,10 @@ def getevents():
                 events.extend(list_events(gcal_service, cal['id']))
 
     formatted_events = format_events(events)
-    db_functions.add_user_with_events(flask.session['meeting_id'], flask.session['user_id'], formatted_events)
+    db_functions.add_user_with_events(flask.session['meeting_id'],
+                                      flask.session['user_id'],
+                                      flask.session['user_name'],
+                                      formatted_events)
 
     return flask.redirect(flask.url_for('events'))
 
@@ -404,11 +410,11 @@ def remove_events():
     meeting = db_functions.get_meeting(flask.session['meeting_id'])
     #for event in events_to_remove:
     for user in meeting['users']:
+        if user['user_id'] == flask.session['user_id']:
+            user['events'][:] = [d for d in user['events'] if d.get('id') not in events_to_remove]
         ## FIXME the remove_event db method does not seem to work in the context of the app.
         ##  I have replaced the call below with the logic above for now.
         #db_functions.remove_event(flask.session['meeting_id'], flask.session['user_id'], event)
-        if user['user_id'] == flask.session['user_id']:
-            user['events'][:] = [d for d in user['events'] if d.get('id') not in events_to_remove]
 
     db_functions.replace_meeting(flask.session['meeting_id'], meeting)
     return flask.redirect(flask.url_for('events'))
