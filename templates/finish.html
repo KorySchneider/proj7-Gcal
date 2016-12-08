@@ -30,15 +30,24 @@
         <br><br>
         <button type='button' id='copy-link-btn'>Copy to Clipboard</button>
         <p><small>this button only selects the text right now</small></p>
+        <br>
+        <br>
+        <br>
+        <button type='button' id='create-new-btn'>Create another meeting</button>
     </div>
 </body>
 
 <script>
 $(document).ready(function() {
     $('#shareable-link').val(window.location.protocol + '//' + window.location.host + '/add/' + $('#meeting_id').val());
+
     $('#copy-link-btn').click(function() {
         $('#shareable-link').select();
         //TODO copy text
+    });
+
+    $('#create-new-btn').click(function() {
+        location.href = '/create';
     });
 });
 </script>
