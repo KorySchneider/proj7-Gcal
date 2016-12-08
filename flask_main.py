@@ -93,10 +93,11 @@ def finish():
     app.logger.debug("Entering finish page")
     return render_template('finish.html')
 
-@app.route("/add/<uuid:meeting_id>")
+@app.route("/add/<meeting_id>")
 def add_user(meeting_id):
     app.logger.debug("Entering add_user with meeting_id {}".format(meeting_id))
     flask.session['meeting_id'] = meeting_id
+    flask.session['user_id'] = str(uuid.uuid4())
     return render_template('calendars.html')
 
 ###
@@ -314,7 +315,10 @@ def oauth2callback():
 @app.route('/setrange', methods=['POST'])
 def setrange():
     """
-    User chose a date range and time range with the bootstrap daterange widget.
+    User chose a date range and time range with the
+    bootstrap daterange widget - create new meeting
+    document in database, and set meeting & user
+    IDs for current session.
     """
     app.logger.debug("Entering setrange")
     daterange = request.form.get('daterange')
@@ -547,10 +551,11 @@ def list_events(service, cal_id):
                                        showDeleted=False,
                                        singleEvents=True).execute()
 
-        meeting_start_date = str(arrow.get(flask.session['begin_range']).date())
-        meeting_end_date = str(arrow.get(flask.session['end_range']).date())
-        meeting_start_time = str(arrow.get(flask.session['begin_range']).time())
-        meeting_end_time = str(arrow.get(flask.session['end_range']).time())
+        meeting_range = db_functions.get_meeting_range(flask.session['meeting_id'])
+        meeting_start_date = str(arrow.get(meeting_range['begin_date']).date())
+        meeting_end_date =   str(arrow.get(meeting_range['end_date']).date())
+        meeting_start_time = str(arrow.get(meeting_range['begin_time']).time())
+        meeting_end_time =   str(arrow.get(meeting_range['end_time']).time())
 
         for event in events['items']:
             if 'transparency' not in event.keys():
