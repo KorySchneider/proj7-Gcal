@@ -90,7 +90,8 @@ def get_meeting_range(meeting_id):
     """
     Return a representation of the time constraints set by the creator of the meeting.
 
-    Looks like: { 'start': <datetime_iso_string>, 'end': <datetime_iso_string> }
+    Looks like: { 'begin_date': <datetime_iso_string>, 'end_date': <datetime_iso_string>,
+                  'begin_time': <datetime_iso_string>, 'end_time': <datetime_iso_string> }
     That is, the beginning of the date range at the start of the time range to the end of
     the date range at the end of the time range.
     """
