@@ -361,7 +361,6 @@ def getevents():
     flask.session['meeting_id'] = meeting_id
     flask.session['user_id'] = user_id
 
-    #meeting_range = { 'start': flask.session['begin_range'], 'end': flask.session['end_range'] }
     meeting_range = { 'begin_date': flask.session['begin_date'], 'end_date': flask.session['end_date'],
                       'begin_time': flask.session['begin_time'], 'end_time': flask.session['end_time'] }
     db_functions.create_meeting(meeting_id, meeting_range)
@@ -558,7 +557,6 @@ def list_events(service, cal_id):
 
         for event in events['items']:
             if 'transparency' not in event.keys():
-                app.logger.debug('event: {}'.format(event))
                 try:
                     ev_start_date = str(arrow.get(event['start']['dateTime']).date())
                     ev_end_date = str(arrow.get(event['end']['dateTime']).date())
