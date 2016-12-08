@@ -98,31 +98,3 @@ def get_meeting_range(meeting_id):
     global collection
     meeting = collection.find_one({ '_id': meeting_id })
     return meeting['meeting_range']
-
-"""
-Meeting document structure:
-
-{
-  _id: <uuid>,
-  created: <datetime_iso_string>,
-  meeting_range: {
-    'start': <datetime_iso_string>,
-    'end': <datetime_iso_string>
-  },
-  users: [
-    {
-      user_id: <uuid>,
-      events: [
-        {
-          event_id: id (from gcal),
-          summary: <string>,
-          start: <datetime_iso_string>,
-          end: <datetime_iso_string>
-        },
-        ...
-      ]
-    },
-    ...
-  ]
-}
-"""
