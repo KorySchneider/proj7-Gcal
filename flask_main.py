@@ -341,6 +341,33 @@ def getevents():
     Get user events from google calendar
     """
     app.logger.debug("Entering getevents")
+    def format_events(events):
+        """
+        Format events for storage in database.
+        A formatted event looks like:
+        {
+          id: eventid,
+          summary: string,
+          start: datetime,
+          end: datetime,
+        }
+        """
+        app.logger.debug('Entering format_events')
+        formatted_events = []
+        for event in events:
+            fevent = {key:event[key] for key in ['id', 'summary']}
+            if 'date' in event['start'].keys():
+                fevent['start'] = arrow.get(event['start']['date']).isoformat()
+            else:
+                fevent['start'] = event['start']['dateTime']
+            if 'date' in event['end'].keys():
+                fevent['end'] = arrow.get(event['end']['date']).replace(days=+1).isoformat()
+            else:
+                fevent['end'] = event['end']['dateTime']
+
+            formatted_events.append(fevent)
+        return formatted_events
+
     calendars = list(dict(request.form).keys())
 
     credentials = valid_credentials()
@@ -365,34 +392,6 @@ def getevents():
     db_functions.add_user_with_events(meeting_id, user_id, formatted_events)
 
     return flask.redirect(flask.url_for('events'))
-
-def format_events(events):
-    """
-    Format events for storage in database.
-
-    A formatted event looks like:
-    {
-      id: eventid,
-      summary: string,
-      start: datetime,
-      end: datetime,
-    }
-    """
-    app.logger.debug('Entering format_events')
-    formatted_events = []
-    for event in events:
-        fevent = {key:event[key] for key in ['id', 'summary']}
-        if 'date' in event['start'].keys():
-            fevent['start'] = arrow.get(event['start']['date']).isoformat()
-        else:
-            fevent['start'] = event['start']['dateTime']
-        if 'date' in event['end'].keys():
-            fevent['end'] = arrow.get(event['end']['date']).replace(days=+1).isoformat()
-        else:
-            fevent['end'] = event['end']['dateTime']
-
-        formatted_events.append(fevent)
-    return formatted_events
 
 @app.route('/remove_events', methods=['POST'])
 def remove_events():
