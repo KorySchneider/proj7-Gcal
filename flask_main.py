@@ -106,19 +106,40 @@ def add_user(meeting_id):
 
 @app.route('/_calc_free_times')
 def _calc_free_times():
-    # TODO handle all-day events
     app.logger.debug("Entering _calc_free_times")
-    meeting_id = request.args.get('meeting_id')
-    meeting_range = db_functions.get_meeting_range(meeting_id)
-    events = db_functions.get_all_events(meeting_id)
-    sorted_events = sorted(events, key=itemgetter('start'))
-    free_times = []
-    for i in range(len(sorted_events) - 1):
-        if sorted_events[i]['end'] < sorted_events[i+1]['start']:
-            free = { 'start': sorted_events[i]['end'], 'end': sorted_events[i+1]['start'] }
-            free_times.append(free)
+    def normalize(events):
+        """
+        Merges overlapping events from a list of events ordered by start times
+        """
+        normalized = []
+        cur = events[0]
+        for event in events[1:]:
+            if event['start'] > cur['end']: # not overlapping
+                normalized.append(cur)
+                cur = event
+            else:
+                cur = merge_events(cur, event)
+        normalized.append(cur)
+        return normalized
+
+    def merge_events(e1, e2, summary=""):
+        """
+        Merge two events
+        """
+        if summary == "":
+            summary = e1['summary'] + " + " + e2['summary']
+        start = min(e1['start'], e2['start'])
+        end = max(e1['end'], e2['end'])
+        return { 'start': start, 'end': end, 'summary': summary }
 
     def separate_free_times(interval, i_list):
+        """
+        If a freetime extends from the end of one day to the beginning of the next,
+        split it into two freetimes: one that goes to then end of the time range on
+        the first day, and another that goes from the start of the next day until the
+        next event. Repeats recursively on the second freetime (to handle freetimes
+        that span multiple days).
+        """
         if str(arrow.get(interval['end']).date()) > str(arrow.get(interval['start']).date()):
             s = arrow.get(interval['start'])
             i1_end = arrow.get(meeting_range['end_time']).replace(year=s.year, month=s.month, day=s.day).isoformat()
@@ -128,7 +149,8 @@ def _calc_free_times():
             i2 = { 'start': i2_start, 'end': interval['end'] }
 
             if not str(arrow.get(interval['start']).time()) == str(arrow.get(i1_end).time()):
-                i_list.append(i1)
+                if not str(arrow.get(i1['start']).time()) > str(arrow.get(i1['end']).time()):
+                    i_list.append(i1)
 
             if str(arrow.get(i2_start).time()) > str(arrow.get(interval['end']).time()) or str(arrow.get(i2_start).time()) == str(arrow.get(interval['end']).time()):
                 return
@@ -137,12 +159,34 @@ def _calc_free_times():
         else:
             i_list.append(interval)
 
+    meeting_id = request.args.get('meeting_id')
+    meeting_range = db_functions.get_meeting_range(meeting_id)
+    events = db_functions.get_all_events(meeting_id)
+    sorted_events = sorted(events, key=itemgetter('start'))
+    normalized_events = normalize(sorted_events)
+
+    free_times = []
+    for i in range(len(normalized_events) - 1):
+        if normalized_events[i]['end'] < normalized_events[i+1]['start']:
+            free = { 'start': normalized_events[i]['end'], 'end': normalized_events[i+1]['start'] }
+            free_times.append(free)
+
+    start_time = str(arrow.get(meeting_range['begin_time']).time()).split(':')
+    initial_free_time = { 'start': arrow.get(meeting_range['begin_date']).replace(hour=int(start_time[0]), minute=int(start_time[1]), second=int(start_time[2])).isoformat(),
+                          'end': normalized_events[0]['start'] }
+    end_time = str(arrow.get(meeting_range['end_time']).time()).split(':')
+    final_free_time = { 'start': normalized_events[-1]['end'],
+                        'end': arrow.get(meeting_range['end_date']).replace(hour=int(end_time[0]), minute=int(end_time[1]), second=int(end_time[2])).isoformat() }
+    free_times.insert(0, initial_free_time)
+    free_times.append(final_free_time)
+
     split_free_times = []
     for ft in free_times:
         separate_free_times(ft, split_free_times)
+    #for ft in split_free_times:
+    #    if ft['start']
 
     return jsonify(free_times = split_free_times)
-
 
 @app.route('/_get_events')
 def _get_events():
@@ -521,7 +565,13 @@ def list_events(service, cal_id):
                         ev_start_date = event['start']['date']
                         ev_end_date = event['end']['date']
 
-                        if ev_start_date >= meeting_start_date or ev_end_date <= meeting_end_date:
+                        if (ev_start_date <= meeting_start_date and ev_end_date >= meeting_start_date) or (ev_end_date >= meeting_end_date and ev_start_date <= meeting_end_date) or (ev_start_date >= meeting_start_date and ev_end_date <= meeting_end_date):
+                            start = arrow.get(event['start']['date']).isoformat()
+                            end = arrow.get(event['end']['date']).isoformat()
+                            del event['start']['date']
+                            del event['end']['date']
+                            event['start'] = { 'dateTime': start }
+                            event['end'] = { 'dateTime': end }
                             event_list.append(event)
                         continue
                     else:
