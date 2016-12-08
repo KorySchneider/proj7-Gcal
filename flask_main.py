@@ -333,6 +333,15 @@ def setrange():
     end_date = arrow.get(flask.session['end_date'])
     flask.session['end_range'] = end_time.replace(year=end_date.year, month=end_date.month, day=end_date.day).isoformat()
 
+    # Create empty meeting in database
+    meeting_id = str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+    flask.session['meeting_id'] = meeting_id
+    flask.session['user_id'] = user_id
+    meeting_range = { 'begin_date': flask.session['begin_date'], 'end_date': flask.session['end_date'],
+                      'begin_time': flask.session['begin_time'], 'end_time': flask.session['end_time'] }
+    db_functions.create_meeting(meeting_id, meeting_range)
+
     return flask.redirect(flask.url_for("choose"))
 
 @app.route('/getevents', methods=['POST'])
@@ -380,16 +389,7 @@ def getevents():
                 events.extend(list_events(gcal_service, cal['id']))
 
     formatted_events = format_events(events)
-    meeting_id = str(uuid.uuid4())
-    user_id = str(uuid.uuid4())
-
-    flask.session['meeting_id'] = meeting_id
-    flask.session['user_id'] = user_id
-
-    meeting_range = { 'begin_date': flask.session['begin_date'], 'end_date': flask.session['end_date'],
-                      'begin_time': flask.session['begin_time'], 'end_time': flask.session['end_time'] }
-    db_functions.create_meeting(meeting_id, meeting_range)
-    db_functions.add_user_with_events(meeting_id, user_id, formatted_events)
+    db_functions.add_user_with_events(flask.session['meeting_id'], flask.session['user_id'], formatted_events)
 
     return flask.redirect(flask.url_for('events'))
 
