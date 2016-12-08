@@ -401,12 +401,16 @@ def format_events(events):
 def remove_events():
     app.logger.debug("Entering remove_events")
     events_to_remove = list(dict(request.form).keys()) # list of event IDs
-    app.logger.debug("Meeting id: {}\nUser id: {}\nFirst event to remove: {}".format(flask.session['meeting_id'], flask.session['user_id'], events_to_remove[0]))
+    meeting = db_functions.get_meeting(flask.session['meeting_id'])
+    #for event in events_to_remove:
+    for user in meeting['users']:
+        ## FIXME the remove_event db method does not seem to work in the context of the app.
+        ##  I have replaced the call below with the logic above for now.
+        #db_functions.remove_event(flask.session['meeting_id'], flask.session['user_id'], event)
+        if user['user_id'] == flask.session['user_id']:
+            user['events'][:] = [d for d in user['events'] if d.get('id') not in events_to_remove]
 
-
-
-    for event in events_to_remove:
-        app.logger.debug(db_functions.remove_event(flask.session['meeting_id'], flask.session['user_id'], event))
+    db_functions.replace_meeting(flask.session['meeting_id'], meeting)
     return flask.redirect(flask.url_for('events'))
 
 ####
