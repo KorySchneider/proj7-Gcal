@@ -48,6 +48,7 @@ def remove_event(meeting_id, user_id, event_id):
     Remove one event from a meeting for a user
     """
     global collection
+    print(collection.find_one({ '_id': meeting_id, 'users.user_id': user_id}))
     return collection.update({ '_id': meeting_id, 'users.user_id': user_id },
             { '$pull': { 'users.$.events': { 'event_id': event_id } } } )
 

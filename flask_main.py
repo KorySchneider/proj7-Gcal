@@ -69,13 +69,15 @@ def calendars():
 @app.route("/choose")
 def choose():
     ## We'll need authorization to list calendars
+    app.logger.debug("Entering choose func")
     credentials = valid_credentials()
     if not credentials:
       return flask.redirect(flask.url_for('oauth2callback'))
 
     gcal_service = get_gcal_service(credentials)
     flask.session['calendars'] = list_calendars(gcal_service)
-    return render_template('index.html') # TODO this should be calendars page?
+    #return render_template('calendars.html')
+    return flask.redirect(flask.url_for("calendars"))
 
 @app.route("/events")
 def events():
@@ -289,7 +291,7 @@ def setrange():
     end_date = arrow.get(flask.session['end_date'])
     flask.session['end_range'] = end_time.replace(year=end_date.year, month=end_date.month, day=end_date.day).isoformat()
 
-    return flask.redirect(flask.url_for("calendars"))
+    return flask.redirect(flask.url_for("choose"))
 
 @app.route('/getevents', methods=['POST'])
 def getevents():
@@ -353,9 +355,14 @@ def format_events(events):
 
 @app.route('/remove_events', methods=['POST'])
 def remove_events():
+    app.logger.debug("Entering remove_events")
     events_to_remove = list(dict(request.form).keys()) # list of event IDs
+    app.logger.debug("Meeting id: {}\nUser id: {}\nFirst event to remove: {}".format(flask.session['meeting_id'], flask.session['user_id'], events_to_remove[0]))
+
+
+
     for event in events_to_remove:
-        db_functions.remove_event(flask.session['meeting_id'], flask.session['user_id'], event)
+        app.logger.debug(db_functions.remove_event(flask.session['meeting_id'], flask.session['user_id'], event))
     return flask.redirect(flask.url_for('events'))
 
 ####
@@ -378,7 +385,7 @@ def init_session_values():
     flask.session["daterange"] = "{} - {}".format(
         tomorrow.format("MM/DD/YYYY"),
         nextweek.format("MM/DD/YYYY"))
-    # Default time span each day, 8 to 5
+    # Default time span each day, 9 to 5
     flask.session["begin_time"] = interpret_time("9am")
     flask.session["end_time"] = interpret_time("5pm")
 
@@ -495,9 +502,15 @@ def list_events(service, cal_id):
                                        timeMax=flask.session['end_range'],
                                        showDeleted=False,
                                        singleEvents=True).execute()
+
+        meeting_start_date = str(arrow.get(flask.session['begin_range']).date())
+        meeting_end_date = str(arrow.get(flask.session['end_range']).date())
+        meeting_start_time = str(arrow.get(flask.session['begin_range']).time())
+        meeting_end_time = str(arrow.get(flask.session['end_range']).time())
+
         for event in events['items']:
             if 'transparency' not in event.keys():
-                # check to see if event is within time constraints
+                app.logger.debug('event: {}'.format(event))
                 try:
                     ev_start_date = str(arrow.get(event['start']['dateTime']).date())
                     ev_end_date = str(arrow.get(event['end']['dateTime']).date())
@@ -505,21 +518,23 @@ def list_events(service, cal_id):
                     ev_end_time = str(arrow.get(event['end']['dateTime']).time())
                 except KeyError:
                     if 'date' in event['start'].keys(): # all-day events
-                        # TODO
-                        #formatted_event = event
-                        #formatted_event['start'] = str(arrow.get(event['start']['date']))
-                        #formatted_event['end'] = str(arrow.get(event['end']['date']))
-                        #event_list.append(formatted_event)
+                        ev_start_date = event['start']['date']
+                        ev_end_date = event['end']['date']
+
+                        if ev_start_date >= meeting_start_date or ev_end_date <= meeting_end_date:
+                            event_list.append(event)
                         continue
                     else:
+                        app.logger.debug('Could not parse event: {}'.format(event))
                         raise
 
-                if ev_start_date <= str(arrow.get(flask.session['end_range']).date()) and ev_start_date >= str(arrow.get(flask.session['begin_range']).date()):
-                    if ev_start_time >= str(arrow.get(flask.session['begin_range']).time()) and ev_end_time <= str(arrow.get(flask.session['end_range']).time()):
+                # check to see if event is within time constraints...
+                if ev_start_date <= meeting_end_date and ev_start_date >= meeting_start_date: # is within date range
+                    if ev_start_time >= meeting_start_time and ev_end_time <= meeting_end_time: # and is within time range
                         event_list.append(event)
-                    elif ev_start_time <= str(arrow.get(flask.session['begin_range']).time()) and ev_end_time >= str(arrow.get(flask.session['begin_range']).time()): # overlap begin time
+                    elif ev_start_time <= meeting_start_time and ev_end_time >= meeting_start_time: # or overlaps begin time
                         event_list.append(event)
-                    elif ev_end_time >= str(arrow.get(flask.session['end_range']).time()) and ev_start_time <= str(arrow.get(flask.session['end_range']).time()):
+                    elif ev_end_time >= meeting_end_time and ev_start_time <= meeting_end_time: # or overlaps end time
                         event_list.append(event)
 
         page_token = events.get('nextPageToken')

@@ -23,7 +23,8 @@
         <input type='hidden' id='meeting_id' value="{{ session.meeting_id }}" />
 
         <h2>Finish</h2>
-        <br><br>
+        <br>
+        <br>
         <p>Share the link below with those you want to schedule a meeting with.</p>
         <input id='shareable-link' size='50' readonly />
         <br><br>
@@ -47,6 +48,10 @@ $(document).ready(function() {
     font-size: 28;
     text-align: center;
     padding: 5px;
+}
+
+h2 {
+    text-decoration: underline;
 }
 </style>
 

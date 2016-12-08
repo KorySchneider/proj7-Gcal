@@ -27,38 +27,66 @@
     <div class='container'>
 
         <div id='navbar'>
-            <button type='button' class='nav-active' id='times-calendars-btn'>Times &amp; Calendars</button>
+            <button type='button' class='nav-active' id='calendars-btn'>Calendars</button>
             <button type='button' id='events-btn'>Events</button>
             <button type='button' id='free-times-btn'>Free Times</button>
         </div>
 
         {% if session.calendars is defined %}
         <div class="row">
-          <h2>Calendars</h2>
-          <br><br>
-          <p>Deselect any calendars that are not relevant, then click 'Continue'.</p>
-          <button type='button' id='select-all-cal'>Select All</button>
-          <button type='button' id='deselect-all-cal'>Deselect All</button>
-          <br><br>
-          {% for cal in session.calendars if cal.selected %}
-          <div class="col-md-4"> <form action='/getevents' method='post'>
-            <input type='checkbox' class='cal-checkbox' name="{{ cal.summary }}" id="{{ cal.id }}" checked='true' />
-            <label for="{{ cal.id }}">{{ cal.summary }}</label>
-          </div>
-            {% if loop.index is divisibleby 3 %}
-              </div> <div class="row">
-            {% endif %}
-          {% endfor %}
+            <h2>Calendars</h2>
+            <br>
+            <br>
+            <p>Deselect any calendars that are not relevant, then click 'Continue'.</p>
+            <button type='button' id='select-all-cal'>Select All</button>
+            <button type='button' id='deselect-all-cal'>Deselect All</button>
+            <br>
+            <br>
+            <form action='/getevents' method='post'>
+            {% for cal in session.calendars if cal.selected %}
+                <input type='checkbox' class='cal-checkbox' name="{{ cal.summary }}" id="{{ cal.id }}" checked='true' />
+                <label for="{{ cal.id }}">{{ cal.summary }}</label>
+                <br>
+            {% endfor %}
+            <br>
+            <button type='submit' id='cal-continue'>Continue</button>
+            </form>
         </div>
-        <br>
-        <button type='submit' id='cal-continue'>Continue</button>
-        </form>
         {% else %}
+        <h2>Calendars</h2>
+        <br><br>
         <p>No calendars to show!</p>
         {% endif %}
 
     </div> <!-- container -->
 </body>
+
+<script>
+$(document).ready(function() {
+    $('#events-btn').click(function() {
+        location.href = '/events';
+    });
+
+    $('#free-times-btn').click(function() {
+        location.href = '/freetimes';
+    });
+
+    $('#select-all-cal').click(function() {
+      toggleCheckboxes($('.cal-checkbox'), true);
+    });
+
+    $('#deselect-all-cal').click(function() {
+      toggleCheckboxes($('.cal-checkbox'), false);
+    });
+});
+
+function toggleCheckboxes(checkboxes, value) {
+    for (var i=0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = value;
+    }
+}
+</script>
+
 
 <style>
 h2 {

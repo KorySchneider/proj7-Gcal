@@ -23,19 +23,21 @@
         <input type='hidden' id='meeting_id' value="{{ session.meeting_id }}" />
 
         <div id='navbar'>
-            <button type='button' id='times-calendars-btn'>Times &amp; Calendars</button>
+            <button type='button' id='calendars-btn'>Calendars</button>
             <button type='button' id='events-btn'>Events</button>
             <button type='button' class='nav-active' id='free-times-btn'>Free Times</button>
         </div>
 
         <h2>Free Times</h2>
+        <br>
+        <br>
         <div id='freetimes'></div>
     </div>
 </body>
 
 <script>
 $(document).ready(function() {
-    $('#times-calendars-btn').click(function() {
+    $('#calendars-btn').click(function() {
         location.href = '/choose';
     });
 
@@ -82,3 +84,11 @@ function fmtDt(dt) {
   return moment(dt).format('hh:mm A on MM/DD');
 }
 </script>
+
+<style>
+h2 {
+    text-decoration: underline;
+}
+</style>
+
+</html>

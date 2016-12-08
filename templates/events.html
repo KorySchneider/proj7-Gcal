@@ -24,19 +24,21 @@
         <input type='hidden' id='user_id' value="{{ session.user_id }}" />
 
         <div id='navbar'>
-            <button type='button' id='times-calendars-btn'>Times &amp; Calendars</button>
+            <button type='button' id='calendars-btn'>Calendars</button>
             <button type='button' class='nav-active' id='events-btn'>Events</button>
             <button type='button' id='free-times-btn'>Free Times</button>
         </div>
 
         <h2>Events</h2>
+        <br>
+        <br>
         <div id='event-list'></div>
     </div>
 </body>
 
 <script>
 $(document).ready(function() {
-  $('#times-calendars-btn').click(function() {
+  $('#calendars-btn').click(function() {
       location.href = '/choose';
   });
 
@@ -48,7 +50,7 @@ $(document).ready(function() {
 });
 
 // TODO
-// fix db method to delete events
+// fix db method to delete events?
 // update event list after submission (call displayEvents after events are removed from db?)
 function displayEvents() {
     var meeting_id = $('#meeting_id').val();
@@ -110,6 +112,10 @@ function toggleCheckboxes(checkboxes, value) {
 <style>
 .ev-checkbox {
   margin-right: 5px;
+}
+
+h2 {
+    text-decoration: underline;
 }
 </style>
 
