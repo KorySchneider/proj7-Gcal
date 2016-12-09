@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html lang="en"> <head>
+<title>Appointments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" type="text/css"
+     href="//cdn.jsdelivr.net/bootstrap/latest/css/bootstrap.css"
+/>
+
+
+<link rel="stylesheet" type="text/css"
+    href="/static/css/busy.css"
+/>
+
+<!-- jquery from a content distribution network; probably cached -->
+<script type="text/javascript"
+     src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js">
+</script>
+
+<script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+
+<script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+</head>
+
+<body>
+    <div class='container'>
+        <div id='content'>
+        </div>
+    </div>
+</body>
+
+<script>
+$(document).ready(function() {
+    $.getJSON('/_get_meeting_info', {},
+        function(data) {
+            var info = data.meeting_info;
+            var html = "";
+            html += "<h2>" + info.creator + " wants to schedule a meeting with you!</h2>";
+            html += "<br><br>";
+            html += "<p><b>Meeting title:</b></p>";
+            html += "<p>" + info.title + "</p>";
+            html += "<br>";
+            if (info.length.hours != 0 && info.length.minutes != 0) {
+                html += "<p><b>Approximate meeting length:</b></p>";
+                if (info.length.hours != 0) {
+                    html += "<p>" + info.length.hours + " hour(s)" + "</p>";
+                }
+                if (info.length.minutes != 0) {
+                    html += "<p>" + info.length.minutes + " minutes" + "</p>";
+                }
+            }
+            html += "<br>";
+            if (info.desc != "") {
+                html += "<p><b>Meeting description:</b></p>";
+                html += "<p>" + info.desc + "</p>";
+                html += "<br>";
+            }
+            html += "<button type='button' id='continue-btn'>Let's go</button>";
+
+            $('#content').html(html);
+
+            $('#continue-btn').click(function() {
+                location.href = '/calendars';
+            });
+        }
+    );
+});
+</script>
+
+</html>

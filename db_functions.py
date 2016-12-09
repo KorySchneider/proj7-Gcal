@@ -28,7 +28,7 @@ def connect():
         print("Failure opening database. Is Mongo running? Correct password?")
         sys.exit(1)
 
-def create_meeting(meeting_id, meeting_range, meeting_desc, meeting_length):
+def create_meeting(meeting_id, meeting_range, meeting_title, meeting_desc, meeting_length, creator_name):
     """
     Create new meeting object in database
     """
@@ -37,8 +37,10 @@ def create_meeting(meeting_id, meeting_range, meeting_desc, meeting_length):
                                 'created': arrow.now().isoformat(),
                                 'users': [],
                                 'meeting_range': meeting_range,
+                                'meeting_title': meeting_title,
                                 'meeting_desc': meeting_desc,
-                                'meeting_length': meeting_length })
+                                'meeting_length': meeting_length,
+                                'creator_name': creator_name })
 
 def replace_meeting(meeting_id, replacement_doc):
     """
@@ -54,13 +56,13 @@ def get_meeting(meeting_id):
     global collection
     return collection.find_one({ '_id': meeting_id })
 
-def add_user_with_events(meeting_id, user_id, user_name, events):
+def add_user_with_events(meeting_id, user_id, events):
     """
     Add an array of events to a meeting for a user
     """
     global collection
     return collection.update({ '_id': meeting_id },
-            { '$push': { 'users': { 'user_id': user_id, 'user_name': user_name, 'events': events } } } )
+            { '$push': { 'users': { 'user_id': user_id, 'events': events } } } )
 
 def remove_event(meeting_id, user_id, event_id):
     """

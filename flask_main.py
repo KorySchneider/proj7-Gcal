@@ -98,7 +98,7 @@ def add_user(meeting_id):
     app.logger.debug("Entering add_user with meeting_id {}".format(meeting_id))
     flask.session['meeting_id'] = meeting_id
     flask.session['user_id'] = str(uuid.uuid4())
-    return render_template('calendars.html')
+    return render_template('adduser.html')
 
 ###
 # Ajax handlers
@@ -183,8 +183,6 @@ def _calc_free_times():
     split_free_times = []
     for ft in free_times:
         separate_free_times(ft, split_free_times)
-    #for ft in split_free_times:
-    #    if ft['start']
 
     return jsonify(free_times = split_free_times)
 
@@ -200,6 +198,19 @@ def _get_events():
     flask.session['user_id'] = user_id
     events = db_functions.get_user_events(meeting_id, user_id)
     return jsonify(events = events)
+
+@app.route('/_get_meeting_info')
+def _get_meeting_info():
+    """
+    Get meeting info to display when adding user
+    """
+    app.logger.debug("Entering _get_meeting_info handler")
+    meeting = db_functions.get_meeting(flask.session['meeting_id'])
+    meeting_info = { 'creator': meeting['creator_name'],
+                     'title': meeting['meeting_title'],
+                     'length': meeting['meeting_length'],
+                     'desc': meeting['meeting_desc'] }
+    return jsonify(meeting_info = meeting_info)
 
 ####
 #
@@ -338,16 +349,17 @@ def setrange():
     flask.session['end_range'] = end_time.replace(year=end_date.year, month=end_date.month, day=end_date.day).isoformat()
 
     # Create empty meeting in database
+    meeting_title = request.form.get('meeting-title')
     meeting_desc = request.form.get('meeting-desc')
     meeting_length = { 'hours': request.form.get('meeting-hrs'), 'minutes': request.form.get('meeting-mins') }
     meeting_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
     flask.session['meeting_id'] = meeting_id
     flask.session['user_id'] = user_id
-    flask.session['user_name'] = request.form.get('creator-name')
+    creator_name = request.form.get('creator-name')
     meeting_range = { 'begin_date': flask.session['begin_date'], 'end_date': flask.session['end_date'],
                       'begin_time': flask.session['begin_time'], 'end_time': flask.session['end_time'] }
-    db_functions.create_meeting(meeting_id, meeting_range, meeting_desc, meeting_length)
+    db_functions.create_meeting(meeting_id, meeting_range, meeting_title, meeting_desc, meeting_length, creator_name)
 
     return flask.redirect(flask.url_for("choose"))
 
@@ -398,7 +410,6 @@ def getevents():
     formatted_events = format_events(events)
     db_functions.add_user_with_events(flask.session['meeting_id'],
                                       flask.session['user_id'],
-                                      flask.session['user_name'],
                                       formatted_events)
 
     return flask.redirect(flask.url_for('events'))
