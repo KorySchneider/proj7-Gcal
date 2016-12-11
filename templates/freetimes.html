@@ -32,47 +32,54 @@
         <br>
         <br>
         <div id='freetimes'></div>
+        <button type='button' id='finish-btn'>Finish</button>
     </div>
 </body>
 
 <script>
 $(document).ready(function() {
     $('#calendars-btn').click(function() {
-        location.href = '/choose';
+        location.href = '/calendars';
     });
 
     $('#events-btn').click(function() {
         location.href = '/events';
     });
 
+    $('#finish-btn').click(function() {
+        location.href = '/finish';
+    });
+
     calcFreeTimes();
 });
 
 function calcFreeTimes() {
+    // Clear div
+    $('#freetimes').html('');
+
     var meeting_id = $('#meeting_id').val();
     if (meeting_id != '') {
         // Calculate free times and display them
         $.getJSON('/_calc_free_times', { meeting_id: meeting_id },
             function(data) {
-                var html = "";
+                if (data.result.free_times == null) {
+                    $('#freetimes').append("<p>No times to show! <br> It might be all free, or there might be no mutual free times. <br> That's all we know for now, sorry.<br>(This service is a work in progress.)</p>");
+                    return
+                } else {
+                    var html = "";
 
-                html += "<p>We found the following mutual free times.</p>";
-                html += "<br>";
+                    html += "<p>We found the following mutual free times.</p>";
+                    html += "<br>";
 
-                for (var i=0; i < data.free_times.length; i++) {
-                    var t = data.free_times[i];
+                    for (var i=0; i < data.result.free_times.length; i++) {
+                        var t = data.result.free_times[i];
 
-                    html += "From <strong>" + fmtDt(t.start) + "</strong> to <strong>" + fmtDt(t.end) + "</strong>.";
-                    html += "<br><br>";
+                        html += "From <strong>" + fmtDt(t.start) + "</strong> to <strong>" + fmtDt(t.end) + "</strong>.";
+                        html += "<br><br>";
+                    }
+
+                    $('#freetimes').append(html);
                 }
-
-                html += "<button type='button' id='finish-btn'>Finish</button>";
-
-                $('#freetimes').append(html);
-
-                $('#finish-btn').click(function() {
-                    location.href = '/finish';
-                });
             }
         );
     } else {

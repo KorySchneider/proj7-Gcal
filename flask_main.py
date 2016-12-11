@@ -64,19 +64,13 @@ def create():
 @app.route("/calendars")
 def calendars():
     app.logger.debug("Entering calendars page")
-    return render_template('calendars.html')
-
-@app.route("/choose")
-def choose():
-    ## We'll need authorization to list calendars
-    app.logger.debug("Entering choose func")
     credentials = valid_credentials()
     if not credentials:
       return flask.redirect(flask.url_for('oauth2callback'))
 
     gcal_service = get_gcal_service(credentials)
     flask.session['calendars'] = list_calendars(gcal_service)
-    return flask.redirect(flask.url_for("calendars"))
+    return render_template('calendars.html')
 
 @app.route("/events")
 def events():
@@ -98,6 +92,7 @@ def add_user(meeting_id):
     app.logger.debug("Entering add_user with meeting_id {}".format(meeting_id))
     flask.session['meeting_id'] = meeting_id
     flask.session['user_id'] = str(uuid.uuid4())
+    flask.session['meeting_range'] = db_functions.get_meeting_range(meeting_id)
     return render_template('adduser.html')
 
 ###
@@ -158,10 +153,13 @@ def _calc_free_times():
                 separate_free_times(i2, i_list)
         else:
             i_list.append(interval)
+    # end functions for this function
 
     meeting_id = request.args.get('meeting_id')
     meeting_range = db_functions.get_meeting_range(meeting_id)
     events = db_functions.get_all_events(meeting_id)
+    if len(events) == 0:
+        return jsonify(result = { 'free_times': None })
     sorted_events = sorted(events, key=itemgetter('start'))
     normalized_events = normalize(sorted_events)
 
@@ -184,7 +182,7 @@ def _calc_free_times():
     for ft in free_times:
         separate_free_times(ft, split_free_times)
 
-    return jsonify(free_times = split_free_times)
+    return jsonify(result = { 'free_times': split_free_times })
 
 @app.route('/_get_events')
 def _get_events():
@@ -310,7 +308,7 @@ def oauth2callback():
     ## Now I can build the service and execute the query,
     ## but for the moment I'll just log it and go back to
     ## the main screen
-    return flask.redirect(flask.url_for('choose'))
+    return flask.redirect(flask.url_for('calendars'))
 
 #####
 #
@@ -340,14 +338,6 @@ def setrange():
     flask.session['begin_time'] = interpret_time(request.form.get('begin_time'))
     flask.session['end_time'] = interpret_time(request.form.get('end_time'))
 
-    begin_date = arrow.get(flask.session['begin_date'])
-    begin_time = arrow.get(flask.session['begin_time'])
-    flask.session['begin_range'] = begin_time.replace(year=begin_date.year, month=begin_date.month, day=begin_date.day).isoformat()
-
-    end_time = arrow.get(flask.session['end_time'])
-    end_date = arrow.get(flask.session['end_date'])
-    flask.session['end_range'] = end_time.replace(year=end_date.year, month=end_date.month, day=end_date.day).isoformat()
-
     # Create empty meeting in database
     meeting_title = request.form.get('meeting-title')
     meeting_desc = request.form.get('meeting-desc')
@@ -361,7 +351,7 @@ def setrange():
                       'begin_time': flask.session['begin_time'], 'end_time': flask.session['end_time'] }
     db_functions.create_meeting(meeting_id, meeting_range, meeting_title, meeting_desc, meeting_length, creator_name)
 
-    return flask.redirect(flask.url_for("choose"))
+    return flask.redirect(flask.url_for("calendars"))
 
 @app.route('/getevents', methods=['POST'])
 def getevents():
@@ -560,15 +550,24 @@ def list_events(service, cal_id):
     app.logger.debug("Entering list_events")
     event_list = []
     page_token = None
+
+    meeting_range = db_functions.get_meeting_range(flask.session['meeting_id'])
+
+    begin_date = arrow.get(meeting_range['begin_date'])
+    begin_time = arrow.get(meeting_range['begin_time'])
+    time_min = begin_time.replace(year=begin_date.year, month=begin_date.month, day=begin_date.day).isoformat()
+    end_time = arrow.get(meeting_range['end_time'])
+    end_date = arrow.get(meeting_range['end_date'])
+    time_max = end_time.replace(year=end_date.year, month=end_date.month, day=end_date.day).isoformat()
+
     while True:
         events = service.events().list(calendarId=cal_id,
                                        pageToken=page_token,
-                                       timeMin=flask.session['begin_range'],
-                                       timeMax=flask.session['end_range'],
+                                       timeMin=time_min,
+                                       timeMax=time_max,
                                        showDeleted=False,
                                        singleEvents=True).execute()
 
-        meeting_range = db_functions.get_meeting_range(flask.session['meeting_id'])
         meeting_start_date = str(arrow.get(meeting_range['begin_date']).date())
         meeting_end_date =   str(arrow.get(meeting_range['end_date']).date())
         meeting_start_time = str(arrow.get(meeting_range['begin_time']).time())
