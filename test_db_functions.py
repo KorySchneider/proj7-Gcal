@@ -96,7 +96,7 @@ def insert_empty_meeting():
 def test_create_meeting():
     clean()
     assert c.find({ '_id': meeting_id }).count() == 0
-    db.create_meeting(meeting_id, meeting_range)
+    db.create_meeting(meeting_id, meeting_range, 'title', 'desc', {'hours': 0, 'minutes': 1}, 'bob')
     assert c.find({ '_id': meeting_id }).count() == 1
 
 def test_add_user_with_events():
